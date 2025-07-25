@@ -2,9 +2,114 @@
 <html>
 <head>
   <title>Login with Google</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    
+    .container {
+      text-align: center;
+      margin-top: 10vh; /* 10% top margin */
+      max-width: 600px;
+      padding: 20px;
+    }
+    
+    h2 {
+      color: #333;
+      margin-bottom: 30px;
+    }
+    
+    .login-button {
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 30px;
+    }
+    
+    .login-button:hover {
+      background-color: #357ae8;
+    }
+    
+    .status-image {
+      max-width: 300px;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      display: none;
+    }
+    
+    .status-message {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    
+    .success {
+      color: #4caf50;
+    }
+    
+    .error {
+      color: #f44336;
+    }
+  </style>
 </head>
 <body>
-  <h2>Sign in to Darkshore</h2>
-  <a href="/login/google"><button>Login with Google</button></a>
+  <div class="container">
+    <h2>Sign in to Darkshore</h2>
+    <a href="/login/google" class="login-button">Login with Google</a>
+    
+    <img id="successImage" src="/logged_in.png" alt="Login Successful" class="status-image">
+    <img id="errorImage" src="/error.png" alt="Login Error" class="status-image">
+    
+    <div id="statusMessage" class="status-message"></div>
+  </div>
+
+  <script>
+    // Check URL parameters for authentication status
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get('status');
+    
+    const successImage = document.getElementById('successImage');
+    const errorImage = document.getElementById('errorImage');
+    const statusMessage = document.getElementById('statusMessage');
+    
+    if (status === 'success') {
+      successImage.style.display = 'block';
+      statusMessage.textContent = 'Login successful!';
+      statusMessage.className = 'status-message success';
+    } else if (status === 'error') {
+      errorImage.style.display = 'block';
+      statusMessage.textContent = 'Login failed. Please try again.';
+      statusMessage.className = 'status-message error';
+    }
+    
+    // Listen for messages from the authentication callback
+    window.addEventListener('message', function(event) {
+      if (event.data.type === 'auth_status') {
+        if (event.data.success) {
+          successImage.style.display = 'block';
+          statusMessage.textContent = 'Login successful!';
+          statusMessage.className = 'status-message success';
+        } else {
+          errorImage.style.display = 'block';
+          statusMessage.textContent = 'Login failed. Please try again.';
+          statusMessage.className = 'status-message error';
+        }
+      }
+    });
+  </script>
 </body>
 </html>
