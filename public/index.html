@@ -1,28 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Login with Google</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Girassol&family=New+Rocker&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@rive-app/canvas"></script>
   <style>
     body {
       margin: 0;
       padding: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f5f5f5;
+      font-family: 'Roboto', Arial, sans-serif;
+      background-color: black;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      text-align: center;
+      margin-top: 10vh;
+      max-width: 600px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
     }
     
-    .container {
-      text-align: center;
-      margin-top: 10vh; /* 10% top margin */
-      max-width: 600px;
-      padding: 20px;
-    }
-    
     h2 {
-      color: #333;
+      color: #ffffff;
       margin-bottom: 30px;
     }
     
@@ -44,17 +52,17 @@
     }
     
     .status-image {
-      max-width: 300px;
+      max-width: 80%;
       height: auto;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
       display: none;
     }
     
     .status-message {
       margin-top: 20px;
+      font-family: 'Girassol', serif;
       font-size: 18px;
       font-weight: bold;
+      color: white;
     }
     
     .success {
@@ -64,49 +72,213 @@
     .error {
       color: #f44336;
     }
+
+    .new-rocker-regular {
+      font-family: "New Rocker", system-ui;
+      font-weight: 400;
+      font-style: normal;
+    }
+
+    .girassol-regular {
+      font-family: "Girassol", serif;
+      font-weight: 400;
+      font-style: normal;
+    }
+
+    #rive-canvas {
+      width: 100%;
+      height: 500px;
+      margin-bottom: 20px;
+      display: block;
+    }
+
   </style>
 </head>
 <body>
+  <canvas id="rive-canvas"></canvas>
+  
   <div class="container">
-    <h2>Sign in to Darkshore</h2>
-    <a href="/login/google" class="login-button">Login with Google</a>
     
-    <img id="successImage" src="/logged_in.png" alt="Login Successful" class="status-image">
-    <img id="errorImage" src="/error.png" alt="Login Error" class="status-image">
+    <!-- <img id="successImage" src="/logged_in.png" alt="Login Successful" class="status-image">
+    <img id="errorImage" src="/error.png" alt="Login Error" class="status-image"> -->
     
-    <div id="statusMessage" class="status-message"></div>
+    <div id="statusMessage" class="status-message">Welcome! Click login to continue.</div>
   </div>
 
   <script>
-    // Check URL parameters for authentication status
-    const urlParams = new URLSearchParams(window.location.search);
-    const status = urlParams.get('status');
+    // Initialize Rive animation with debugging
+    console.log('Initializing Rive animation...');
+
+    let triggerProperty;
     
-    const successImage = document.getElementById('successImage');
-    const errorImage = document.getElementById('errorImage');
+    const riveInstance = new rive.Rive({
+      src: "/dfc_login.riv",
+      canvas: document.getElementById("rive-canvas"),
+      autoplay: true,
+      animations: ["Intro", "Idle"], // Play multiple animations simultaneously
+      // stateMachines: "State Machine 1", // Alternative: try state machine
+      autoBind: true, // Enable auto-binding for ViewModel
+      onLoad: () => {
+        console.log('Rive animation loaded successfully!');
+        console.log('Available animations:', riveInstance.animationNames);
+        console.log('Available state machines:', riveInstance.stateMachineNames);
+        
+        // Access the auto-bound view model instance
+        const viewModelInstance = riveInstance.viewModelInstance;
+        if (viewModelInstance) {
+          console.log('ViewModel instance found:', viewModelInstance);
+          
+          // Store reference for later use
+          window.riveViewModel = viewModelInstance;
+          
+          // Get references to the boolean properties
+          try {
+            window.responseProperty = viewModelInstance.boolean("Response");
+            window.successProperty = viewModelInstance.boolean("Success");
+            console.log('Boolean properties found: Response and Success');
+
+            //GotResponse
+            triggerProperty = viewModelInstance.trigger("GotResponse");
+            
+            // Now that properties are available, check the URL status
+            const urlParams = new URLSearchParams(window.location.search);
+            const status = urlParams.get('status');
+            
+            // Get DOM elements
+            const successImage = document.getElementById('successImage');
+            const errorImage = document.getElementById('errorImage');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            if (status === 'success') {
+              console.log('Processing success status from URL');
+              updateRiveViewModel(true);
+              successImage.style.display = 'block';
+              statusMessage.textContent = 'Login successful!';
+              statusMessage.className = 'status-message success';
+            } else if (status === 'error') {
+              console.log('Processing error status from URL');
+              updateRiveViewModel(false);
+              errorImage.style.display = 'block';
+              statusMessage.textContent = 'Login failed. Please try again.';
+              statusMessage.className = 'status-message error';
+            }
+
+            
+            
+          } catch (error) {
+            console.error('Error accessing boolean properties:', error);
+          }
+        } else {
+          console.warn('No ViewModel instance found - make sure your Rive file has a ViewModel bound to the artboard');
+        }
+        
+        riveInstance.resizeDrawingSurfaceToCanvas();
+        
+        // Force restart if it stops
+        setTimeout(() => {
+          if (!riveInstance.isPlaying) {
+            console.log('Animation stopped, restarting...');
+            riveInstance.play();
+          }
+        }, 100);
+      },
+      onLoadError: (error) => {
+        console.error('Failed to load Rive file:', error);
+      },
+      onPlay: () => {
+        console.log('Rive animation started playing');
+      },
+      onPause: () => {
+        console.log('Rive animation paused');
+      },
+      onStop: () => {
+        console.log('Rive animation stopped');
+        // Auto-restart when animation stops
+        setTimeout(() => {
+          console.log('Restarting animation...');
+          riveInstance.play();
+        }, 100);
+      },
+      onLoop: () => {
+        console.log('Rive animation looped');
+      }
+    });
+
+    // Handle window resize to keep Rive animation crisp
+    window.addEventListener("resize", () => {
+      if (riveInstance) {
+        riveInstance.resizeDrawingSurfaceToCanvas();
+      }
+    });
+
+    // Set initial loading message
     const statusMessage = document.getElementById('statusMessage');
+    statusMessage.textContent = 'Loading...';
     
-    if (status === 'success') {
-      successImage.style.display = 'block';
-      statusMessage.textContent = 'Login successful!';
-      statusMessage.className = 'status-message success';
-    } else if (status === 'error') {
-      errorImage.style.display = 'block';
-      statusMessage.textContent = 'Login failed. Please try again.';
-      statusMessage.className = 'status-message error';
+    // Function to update Rive ViewModel based on login status
+    function updateRiveViewModel(isSuccess) {
+      if (window.responseProperty && window.successProperty) {
+        try {
+          // Set Response to true (we got a response)
+          window.responseProperty.value = true;
+          
+          // Set Success based on login result
+          window.successProperty.value = isSuccess;
+
+          // Trigger the GotResponse trigger if available
+          if (triggerProperty) {
+            triggerProperty.trigger();
+            console.log('GotResponse trigger fired');
+          }
+          
+          console.log(`Rive ViewModel updated: Response=true, Success=${isSuccess}`);
+          console.log( 'Success: ' + window.successProperty.value )
+          console.log( 'Response: ' + window.responseProperty.value )
+          
+          // Play animation based on login result
+          if (riveInstance) {
+            try {
+              if (isSuccess) {
+                riveInstance.play("Success");
+                console.log('Playing Success animation');
+              } else {
+                riveInstance.play("Error");
+                console.log('Playing Error animation');
+              }
+            } catch (error) {
+              console.error('Error playing animation:', error);
+            }
+          }
+          
+        } catch (error) {
+          console.error('Error updating Rive ViewModel:', error);
+        }
+      } else {
+        console.warn('Rive ViewModel properties not available yet');
+      }
     }
     
-    // Listen for messages from the authentication callback
     window.addEventListener('message', function(event) {
       if (event.data.type === 'auth_status') {
+        // Get DOM elements
+        const successImage = document.getElementById('successImage');
+        const errorImage = document.getElementById('errorImage');
+        const statusMessage = document.getElementById('statusMessage');
+        
         if (event.data.success) {
           successImage.style.display = 'block';
           statusMessage.textContent = 'Login successful!';
           statusMessage.className = 'status-message success';
+          
+          // Update Rive ViewModel for success
+          updateRiveViewModel(true);
         } else {
           errorImage.style.display = 'block';
           statusMessage.textContent = 'Login failed. Please try again.';
           statusMessage.className = 'status-message error';
+          
+          // Update Rive ViewModel for error
+          updateRiveViewModel(false);
         }
       }
     });
