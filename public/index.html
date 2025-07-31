@@ -152,13 +152,15 @@
             if (status === 'success') {
               console.log('Processing success status from URL');
               updateRiveViewModel(true);
-              successImage.style.display = 'block';
+              // Only update images if they exist
+              if (successImage) successImage.style.display = 'block';
               statusMessage.textContent = 'Login successful!';
               statusMessage.className = 'status-message success';
             } else if (status === 'error') {
               console.log('Processing error status from URL');
               updateRiveViewModel(false);
-              errorImage.style.display = 'block';
+              // Only update images if they exist
+              if (errorImage) errorImage.style.display = 'block';
               statusMessage.textContent = 'Login failed. Please try again.';
               statusMessage.className = 'status-message error';
             }
@@ -266,14 +268,16 @@
         const statusMessage = document.getElementById('statusMessage');
         
         if (event.data.success) {
-          successImage.style.display = 'block';
+          // Only update images if they exist
+          if (successImage) successImage.style.display = 'block';
           statusMessage.textContent = 'Login successful!';
           statusMessage.className = 'status-message success';
           
           // Update Rive ViewModel for success
           updateRiveViewModel(true);
         } else {
-          errorImage.style.display = 'block';
+          // Only update images if they exist
+          if (errorImage) errorImage.style.display = 'block';
           statusMessage.textContent = 'Login failed. Please try again.';
           statusMessage.className = 'status-message error';
           
